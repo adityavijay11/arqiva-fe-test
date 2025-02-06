@@ -94,7 +94,7 @@ export function VirtualizedTable() {
     [],
   );
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Skeleton
         variant="rectangular"

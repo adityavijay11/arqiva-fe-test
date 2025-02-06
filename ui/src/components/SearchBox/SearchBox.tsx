@@ -44,15 +44,15 @@ export function SearchBox() {
 
   useEffect(() => {
     const url = new URLSearchParams(location.search);
-    if (url.has("title")) {
-      const titleParam = url.get("title") || "";
+    const titleParam = url.get("title") || "";
+    const ownerParam = url.get("owner") || "";
+    if (titleParam !== title) {
       setTitle(titleParam);
     }
-    if (url.has("owner")) {
-      const ownerParam = url.get("owner") || "";
+    if (ownerParam !== owner) {
       setOwner(ownerParam);
     }
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     if (!isLoading) {

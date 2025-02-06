@@ -28,6 +28,8 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-empty-object-type": "off",
       '@stylistic/js/indent': ['error', 2],
+      'react-hooks/exhaustive-deps': "off",
+      'react-refresh/only-export-components': "off"
     },
   },
 )
