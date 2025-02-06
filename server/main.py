@@ -3,11 +3,15 @@ import re
 from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Optional, List
-
+import time
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 # SIMPLE store of data for this exercise
 DATA = {}
+
+# Introduced artificial delay of 2sec for client performance check
+RESPONSE_DELAY = 1
 
 
 @asynccontextmanager
@@ -19,6 +23,18 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -58,7 +74,8 @@ def _ids(l: list):
 
 @app.get("/contributions/")
 async def list_contributions(skip: int = 0, limit: int = 30,
-                             order_by: ContributionOrder = Query(default=ContributionOrder.id),
+                             order_by: ContributionOrder = Query(
+                                 default=ContributionOrder.id),
                              id: Optional[List[str]] = Query(None),
                              owner: Optional[str] = Query(None),
                              title: Optional[str] = Query(None),
@@ -82,11 +99,13 @@ async def list_contributions(skip: int = 0, limit: int = 30,
     matching_end_after = all_ids
 
     if id:
-        matching_ids = _ids(list(filter(lambda c: c['id'] in [int(i) for i in id], contributions)))
+        matching_ids = _ids(
+            list(filter(lambda c: c['id'] in [int(i) for i in id], contributions)))
         print("IDs :", matching_ids)
 
     if title:
-        matching_title = _ids(list(filter(lambda c: re.search(title, c['title'], re.IGNORECASE), contributions)))
+        matching_title = _ids(list(filter(lambda c: re.search(
+            title, c['title'], re.IGNORECASE), contributions)))
         print("Title :", matching_title)
 
     if description:
@@ -95,23 +114,28 @@ async def list_contributions(skip: int = 0, limit: int = 30,
         print("Desc :", matching_description)
 
     if owner:
-        matching_owner = _ids(list(filter(lambda c: re.search(owner, c['owner'], re.IGNORECASE), contributions)))
+        matching_owner = _ids(list(filter(lambda c: re.search(
+            owner, c['owner'], re.IGNORECASE), contributions)))
         print("Desc :", matching_owner)
 
     if startBefore:
-        matching_start_before = _ids(list(filter(lambda c: c['startTime'] < startBefore, contributions)))
+        matching_start_before = _ids(
+            list(filter(lambda c: c['startTime'] < startBefore, contributions)))
         print("StartBefore :", matching_start_before)
 
     if startAfter:
-        matching_start_after = _ids(list(filter(lambda c: c['startTime'] > startAfter, contributions)))
+        matching_start_after = _ids(
+            list(filter(lambda c: c['startTime'] > startAfter, contributions)))
         print("StartAfter :", matching_start_after)
 
     if endBefore:
-        matching_end_before = _ids(list(filter(lambda c: c['endTime'] < endBefore, contributions)))
+        matching_end_before = _ids(
+            list(filter(lambda c: c['endTime'] < endBefore, contributions)))
         print("EndBefore :", matching_end_before)
 
     if endAfter:
-        matching_end_after = _ids(list(filter(lambda c: c['endTime'] > endAfter, contributions)))
+        matching_end_after = _ids(
+            list(filter(lambda c: c['endTime'] > endAfter, contributions)))
         print("EndAfter :", matching_end_after)
 
     matching_contribution_ids = []
@@ -124,17 +148,18 @@ async def list_contributions(skip: int = 0, limit: int = 30,
             set(matching_ids) & set(matching_title) & set(matching_description) & set(matching_start_before) & set(
                 matching_start_after) & set(matching_end_before) & set(matching_end_after) & set(matching_owner))
 
-    matching_contributions = [c for c in contributions if c['id'] in matching_contribution_ids]
+    matching_contributions = [
+        c for c in contributions if c['id'] in matching_contribution_ids]
 
     if order_by:
-        matching_contributions = sorted(matching_contributions, key=lambda contribution: contribution[order_by])
+        matching_contributions = sorted(
+            matching_contributions, key=lambda contribution: contribution[order_by])
 
     paginated_contributions = matching_contributions[skip:skip + limit]
-
+    time.sleep(RESPONSE_DELAY)
     return {
         "contributions": paginated_contributions,
         "total": len(matching_contributions),
         "skip": skip,
         "limit": limit
     }
-
